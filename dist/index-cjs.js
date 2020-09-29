@@ -693,99 +693,120 @@ function Alpha(ref) {
 }
 
 function GradientPoint(ref) {
-    var point = ref.point;
-    var activePointIndex = ref.activePointIndex;
-    var index = ref.index;
-    var width = ref.width;
-    var positions = ref.positions;
-    var changeActivePointIndex = ref.changeActivePointIndex;
-    var updateGradientLeft = ref.updateGradientLeft;
-    var removePoint = ref.removePoint;
+  var point = ref.point;
+  var activePointIndex = ref.activePointIndex;
+  var index = ref.index;
+  var width = ref.width;
+  var positions = ref.positions;
+  var changeActivePointIndex = ref.changeActivePointIndex;
+  var updateGradientLeft = ref.updateGradientLeft;
+  var removePoint = ref.removePoint;
 
-    var activeClassName = activePointIndex === index ? ' active' : '';
+  var activeClassName = activePointIndex === index ? ' active' : '';
 
-    var pointStyle = {
-        left: (((point.left * (width / 100)) - 6) + "px"),
-    };
+  var pointStyle = {
+    left: ((point.left * (width / 100) - 6) + "px"),
+  };
 
-    var mouseDownHandler = React.useCallback(function (event) {
-        changeActivePointIndex(index);
+  var mouseDownHandler = React.useCallback(
+    function (event) {
+      changeActivePointIndex(index);
 
-        var startX = event.pageX;
-        var startY = event.pageY;
-        var offsetX = startX - positions.x;
+      var startX = event.pageX;
+      var startY = event.pageY;
+      var offsetX = startX - positions.x;
 
-        updateGradientLeft(point.left, index, 'onStartChange');
+      updateGradientLeft(point.left, index, 'onStartChange');
 
-        return {
-            startX: startX,
-            startY: startY,
-            offsetX: offsetX,
+      return {
+        startX: startX,
+        startY: startY,
+        offsetX: offsetX,
+      };
+    },
+    [point.left, index, positions, changeActivePointIndex, updateGradientLeft]
+  );
 
-        };
-    }, [point.left, index, positions, changeActivePointIndex, updateGradientLeft]);
+  var changeObjectPositions = React.useCallback(
+    function (event, ref) {
+      var startX = ref.startX;
+      var offsetX = ref.offsetX;
 
-    var changeObjectPositions = React.useCallback(function (event, ref) {
-        var startX = ref.startX;
-        var offsetX = ref.offsetX;
+      var moveX = event.pageX - startX;
+      offsetX += moveX;
+      // update point percent
+      var left = updateGradientActivePercent(offsetX, width);
 
-        var moveX = event.pageX - startX;
-        offsetX += moveX;
-        // update point percent
-        var left = updateGradientActivePercent(offsetX, width);
+      return {
+        positions: {
+          offsetX: offsetX,
+          startX: event.pageX,
+        },
+        left: left,
+      };
+    },
+    [width]
+  );
 
-        return {
-            positions: {
-                offsetX: offsetX,
-                startX: event.pageX,
-            },
-            left: left,
-        };
-    }, [width]);
+  var mouseMoveHandler = React.useCallback(
+    function (event, ref) {
+      var startX = ref.startX;
+      var offsetX = ref.offsetX;
 
-    var mouseMoveHandler = React.useCallback(function (event, ref) {
-        var startX = ref.startX;
-        var offsetX = ref.offsetX;
+      var ref$1 = changeObjectPositions(event, {
+        startX: startX,
+        offsetX: offsetX,
+      });
+      var positions = ref$1.positions;
+      var left = ref$1.left;
 
-        var ref$1 = changeObjectPositions(event, { startX: startX, offsetX: offsetX });
-        var positions = ref$1.positions;
-        var left = ref$1.left;
+      updateGradientLeft(left, index, 'onChange');
 
-        updateGradientLeft(left, index, 'onChange');
+      return positions;
+    },
+    [index, changeObjectPositions, updateGradientLeft]
+  );
 
-        return positions;
-    }, [index, changeObjectPositions, updateGradientLeft]);
+  var mouseUpHandler = React.useCallback(
+    function (event, ref) {
+      var startX = ref.startX;
+      var offsetX = ref.offsetX;
 
-    var mouseUpHandler = React.useCallback(function (event, ref) {
-        var startX = ref.startX;
-        var offsetX = ref.offsetX;
+      var ref$1 = changeObjectPositions(event, {
+        startX: startX,
+        offsetX: offsetX,
+      });
+      var positions = ref$1.positions;
+      var left = ref$1.left;
 
-        var ref$1 = changeObjectPositions(event, { startX: startX, offsetX: offsetX });
-        var positions = ref$1.positions;
-        var left = ref$1.left;
+      updateGradientLeft(left, index, 'onEndChange');
 
-        updateGradientLeft(left, index, 'onEndChange');
+      return positions;
+    },
+    [index, changeObjectPositions, updateGradientLeft]
+  );
 
-        return positions;
-    }, [index, changeObjectPositions, updateGradientLeft]);
+  var mouseEvents = useMouseEvents(
+    mouseDownHandler,
+    mouseMoveHandler,
+    mouseUpHandler
+  );
 
-    var mouseEvents = useMouseEvents(mouseDownHandler, mouseMoveHandler, mouseUpHandler);
+  var onMouseDown = function (event) {
+    changeActivePointIndex(index);
+    mouseEvents(event);
+  };
 
-    var onMouseDown = function (event) {
-        changeActivePointIndex(index);
-        mouseEvents(event);
-    };
+  var pointerClickHandler = function (event) {
+    event.stopPropagation();
+  };
 
-    var pointerClickHandler = function (event) {
-        event.stopPropagation();
-    };
-
-    return (
-        React__default['default'].createElement( 'div', {
-            className: ("picker-pointer" + activeClassName), onClick: pointerClickHandler, style: pointStyle, onMouseDown: onMouseDown, onDoubleClick: function () { return removePoint(index); } },
-            React__default['default'].createElement( 'span', { className: ("child-point" + activeClassName) })
-        )
-    );
+  return (
+    React__default['default'].createElement( 'div', {
+      className: ("picker-pointer" + activeClassName), onClick: pointerClickHandler, style: pointStyle, onMouseDown: onMouseDown, onDoubleClick: function () { return removePoint(index); } },
+      React__default['default'].createElement( 'span', { className: ("child-point" + activeClassName) })
+    )
+  );
 }
 
 function GradientPoints(ref) {
@@ -1160,100 +1181,114 @@ Solid.defaultProps = {
 };
 
 function GradientControls(ref) {
-    var type = ref.type;
-    var degree = ref.degree;
-    var changeGradientControl = ref.changeGradientControl;
+  var type = ref.type;
+  var degree = ref.degree;
+  var changeGradientControl = ref.changeGradientControl;
 
-    var ref$1 = React.useState(false);
-    var disableClick = ref$1[0];
-    var setDisableClick = ref$1[1];
+  var ref$1 = React.useState(false);
+  var disableClick = ref$1[0];
+  var setDisableClick = ref$1[1];
 
-    var onClickGradientDegree = React.useCallback(function () {
-        if (disableClick) {
-            setDisableClick(false);
-            return;
-        }
+  var onClickGradientDegree = React.useCallback(function () {
+    if (disableClick) {
+      setDisableClick(false);
+      return;
+    }
 
-        var gradientDegree = degree + 45;
+    var gradientDegree = degree + 45;
 
-        if (gradientDegree >= 360) {
-            gradientDegree = 0;
-        }
+    if (gradientDegree >= 360) {
+      gradientDegree = 0;
+    }
 
-        changeGradientControl({ degree: parseInt(gradientDegree, 10) });
-    }, [disableClick, degree, changeGradientControl]);
+    changeGradientControl({ degree: parseInt(gradientDegree, 10) });
+  }, [disableClick, degree, changeGradientControl]);
 
-    var mouseDownHandler = React.useCallback(function (event) {
-        var pointer = event.target;
-        var pointerBox = pointer.getBoundingClientRect();
-        var centerY = pointerBox.top + parseInt(8 - window.pageYOffset, 10);
-        var centerX = pointerBox.left + parseInt(8 - window.pageXOffset, 10);
+  var mouseDownHandler = React.useCallback(function (event) {
+    var pointer = event.target;
+    var pointerBox = pointer.getBoundingClientRect();
+    var centerY = pointerBox.top; //+ parseInt(8 - window.pageYOffset, 10);
+    var centerX = pointerBox.left; // + parseInt(8 - window.pageXOffset, 10);
 
-        return {
-            centerY: centerY,
-            centerX: centerX,
-
-        };
-    }, []);
-
-    var mouseMoveHandler = React.useCallback(function (event, ref) {
-        var centerX = ref.centerX;
-        var centerY = ref.centerY;
-
-        setDisableClick(true);
-
-        var newDegree = calculateDegree(event.clientX, event.clientY, centerX, centerY);
-
-        changeGradientControl({ degree: parseInt(newDegree, 10) });
-
-        return { centerX: centerX, centerY: centerY };
-    }, [changeGradientControl]);
-
-    var mouseUpHandler = function (event) {
-        var targetClasses = event.target.classList;
-
-        if (targetClasses.contains('gradient-degrees') || targetClasses.contains('icon-rotate')) {
-            return;
-        }
-
-        setDisableClick(false);
+    console.log(centerX, centerY);
+    return {
+      centerY: centerY,
+      centerX: centerX,
     };
+  }, []);
 
-    var mouseEvents = useMouseEvents(mouseDownHandler, mouseMoveHandler, mouseUpHandler);
+  var mouseMoveHandler = React.useCallback(
+    function (event, ref) {
+      var centerX = ref.centerX;
+      var centerY = ref.centerY;
 
-    var onMouseDown = function (event) {
-        mouseEvents(event);
-    };
+      setDisableClick(true);
 
-    var degreesStyle = {
-        transform: ("rotate(" + degree + "deg)"),
-    };
+      var newDegree = calculateDegree(
+        event.clientX,
+        event.clientY,
+        centerX,
+        centerY
+      );
 
-    return (
-        React__default['default'].createElement( 'div', { className: "gradient-controls" },
-            React__default['default'].createElement( 'div', { className: "gradient-type" },
-                React__default['default'].createElement( 'div', {
-                    className: ("gradient-type-item liner-gradient " + (type === 'linear' ? 'active' : '')), onClick: function () { return changeGradientControl({ type: 'linear' }); } }),
-                React__default['default'].createElement( 'div', {
-                    className: ("gradient-type-item radial-gradient " + (type === 'radial' ? 'active' : '')), onClick: function () { return changeGradientControl({ type: 'radial' }); } })
-            ),
-            type === 'linear'
-                && (
-                    React__default['default'].createElement( 'div', { className: "gradient-degrees-options" },
-                        React__default['default'].createElement( 'div', {
-                            className: "gradient-degrees", onMouseDown: onMouseDown, onClick: onClickGradientDegree },
-                            React__default['default'].createElement( 'div', { className: "gradient-degree-center", style: degreesStyle },
-                                React__default['default'].createElement( 'div', { className: "gradient-degree-pointer" })
-                            )
-                        ),
-                        React__default['default'].createElement( 'div', { className: "gradient-degree-value" },
-                            React__default['default'].createElement( 'p', null,
-                                degree, "°" )
-                        )
-                    )
-                )
+      changeGradientControl({ degree: parseInt(newDegree, 10) });
+
+      return { centerX: centerX, centerY: centerY };
+    },
+    [changeGradientControl]
+  );
+
+  var mouseUpHandler = function (event) {
+    var targetClasses = event.target.classList;
+
+    if (
+      targetClasses.contains('gradient-degrees') ||
+      targetClasses.contains('icon-rotate')
+    ) {
+      return;
+    }
+
+    setDisableClick(false);
+  };
+
+  var mouseEvents = useMouseEvents(
+    mouseDownHandler,
+    mouseMoveHandler,
+    mouseUpHandler
+  );
+
+  var onMouseDown = function (event) {
+    mouseEvents(event);
+  };
+
+  var degreesStyle = {
+    transform: ("rotate(" + degree + "deg)"),
+  };
+
+  return (
+    React__default['default'].createElement( 'div', { className: "gradient-controls" },
+      React__default['default'].createElement( 'div', { className: "gradient-type" },
+        React__default['default'].createElement( 'div', {
+          className: ("gradient-type-item liner-gradient " + (type === 'linear' ? 'active' : '')), onClick: function () { return changeGradientControl({ type: 'linear' }); } }),
+        React__default['default'].createElement( 'div', {
+          className: ("gradient-type-item radial-gradient " + (type === 'radial' ? 'active' : '')), onClick: function () { return changeGradientControl({ type: 'radial' }); } })
+      ),
+      type === 'linear' && (
+        React__default['default'].createElement( 'div', { className: "gradient-degrees-options" },
+          React__default['default'].createElement( 'div', {
+            className: "gradient-degrees", onMouseDown: onMouseDown, onClick: onClickGradientDegree },
+            React__default['default'].createElement( 'div', { className: "gradient-degree-center", style: degreesStyle },
+              React__default['default'].createElement( 'div', { className: "gradient-degree-pointer" })
+            )
+          ),
+          React__default['default'].createElement( 'div', { className: "gradient-degree-value" },
+            React__default['default'].createElement( 'p', null,
+              degree, "°" )
+          )
         )
-    );
+      )
+    )
+  );
 }
 
 function Gradient(ref) {
